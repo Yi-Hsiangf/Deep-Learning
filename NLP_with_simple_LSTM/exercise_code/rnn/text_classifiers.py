@@ -63,20 +63,20 @@ class RNNClassifier(nn.Module):
         # pack_padded_sequence should be applied to the embedding outputs      #
         ########################################################################
         #print("sequence",sequence)
-        #print("sequence",sequence.shape)
+        #print("sequence:",sequence.shape)
+        seq_len, batch_size = sequence.shape
         #lengths = sequence.shape[0]
         emb = self.Embedding(sequence)
         if lengths != None:
-            emb = pack_padded_sequence(emb, lengths, batch_first=True)
+            emb = pack_padded_sequence(emb, lengths, batch_first=False)
             
-        packed_output, (hidden,c) = self.LSTM(emb)
-        output, output_lengths = pad_packed_sequence(packed_output)
-        #print("lstm_out:",lstm_out.shape)
- 
-        #print("lstm_out:",lstm_out.shape)
-        hidden = torch.cat((hidden[-2,:,:], hidden[-1,:,:]), dim = 1)
-        output = self.classifier(hidden.squeeze(0))
-        print("output:",output.shape)
+        lstm_out, (h_n,c_n) = self.LSTM(emb)
+        h_n = h_n.view(batch_size, self.hparams['hidden_size'])
+        #print(h_n.shape)
+        output = self.classifier(h_n)
+        output = torch.reshape(output, (batch_size,))
+        #print(output.shape)
+        
         ########################################################################
         #                           END OF YOUR CODE                           #
         ########################################################################
